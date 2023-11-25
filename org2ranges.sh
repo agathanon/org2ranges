@@ -13,6 +13,13 @@
 # as the organization search is loose, you will be asked to edit the input
 # list before asn2ranges is called.
 
+# Configuration
+CACHE_DIR="/tmp/.bgp_tools"
+CACHE_UPDATE_INTERVAL=$((24 * 60 * 60)) # 24 hours in seconds
+RANGES_FILE="ranges.txt"
+IPV4_FILE="ipv4.txt"
+IPV6_FILE="ipv6.txt"
+
 print_banner() {
     cat << "EOF"
                   ___
@@ -30,7 +37,7 @@ EOF
 }
 
 asn2ranges() {
-	local cache_file="/tmp/.bgp_tools_table_cache"
+	local cache_file="$CACHE_DIR/.bgp_tools_table_cache"
 	local current_time=$(date +%s)
 	local update_interval=$((24 * 60 * 60)) # 2 hours in seconds
 	if [ -f "$cache_file" ]; then
@@ -47,7 +54,7 @@ asn2ranges() {
 
 asn2search() {
 	local search_string="$1"
-	local cache_file="/tmp/.bgp_tools_asn_cache"
+	local cache_file="$CACHE_DIR/.bgp_tools_asn_cache"
 	local current_time=$(date +%s)
 	local update_interval=$((24 * 60 * 60)) # 24 hours in seconds
 	if [ -f "$cache_file" ]; then
@@ -64,6 +71,10 @@ asn2search() {
 
 # org2ranges main
 print_banner
+
+if [ ! -d "$CACHE_DIR" ]; then
+    mkdir -p "$CACHE_DIR"
+fi
 
 if [[ -z "$1" ]]; then
     echo "[!] No organization provided."
@@ -92,28 +103,26 @@ if [[ -n "$as_list" ]]; then
     num_asns=$(wc -l "$temp_file" | awk '{print $1}')
     echo "[*] Gathering IP ranges for $num_asns ASNs..."
 
-    ranges_file="ranges.txt"
-
-    # Delete ranges_file if it already exists
-    if [[ -f "$ranges_file" ]]; then
-        rm "$ranges_file"
+    # Delete RANGES_FILE if it already exists
+    if [[ -f "$RANGES_FILE" ]]; then
+        rm "$RANGES_FILE"
     fi
 
     while IFS= read -r line; do
         as_number=$(echo "$line" | grep -oP '\bAS\d+\b' | sed 's/^AS//')
 
         if [[ -n $as_number ]]; then
-            asn2ranges "$as_number" >> "$ranges_file"
+            asn2ranges "$as_number" >> "$RANGES_FILE"
         fi
     done < "$temp_file"
 
-    grep -v ":" "$ranges_file" > ipv4.txt
-    grep ":" "$ranges_file" > ipv6.txt
+    grep -v ":" "$RANGES_FILE" > "$IPV4_FILE"
+    grep ":" "$RANGES_FILE" > "$IPV6_FILE"
 
     echo "[+] Created ranges.txt, ipv4.txt, and ipv6.txt!"
 
-    num_v4=$(wc -l ipv4.txt | awk '{print $1}')
-    num_v6=$(wc -l ipv6.txt | awk '{print $1}')
+    num_v4=$(wc -l "$IPV4_FILE" | awk '{print $1}')
+    num_v6=$(wc -l "$IPV6_FILE" | awk '{print $1}')
     echo "[+] IPv4 range count: $num_v4"
     echo "[+] IPv6 range count: $num_v6"
     echo "[*] Happy hunting!"
