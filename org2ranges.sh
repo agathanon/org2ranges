@@ -13,6 +13,22 @@
 # as the organization search is loose, you will be asked to edit the input
 # list before asn2ranges is called.
 
+print_banner() {
+    cat << "EOF"
+                  ___
+                 |__ \
+   ___  _ __ __ _   ) |_ __ __ _ _ __   __ _  ___  ___
+  / _ \| '__/ _` | / /| '__/ _` | '_ \ / _` |/ _ \/ __|
+ | (_) | | | (_| |/ /_| | | (_| | | | | (_| |  __/\__ \
+  \___/|_|  \__, |____|_|  \__,_|_| |_|\__, |\___||___/
+             __/ |                      __/ |
+            |___/                      |___/
+
+                           writen by agathanonymous
+
+EOF
+}
+
 asn2ranges() {
 	local cache_file="/tmp/.bgp_tools_table_cache"
 	local current_time=$(date +%s)
@@ -47,6 +63,8 @@ asn2search() {
 }
 
 # org2ranges main
+print_banner
+
 if [[ -z "$1" ]]; then
     echo "[!] No organization provided."
     exit 1
